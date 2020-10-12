@@ -1,11 +1,22 @@
 package bicyclestoreservice
 
+import (
+	"github.com/trtstm/storesservice/models"
+	"github.com/trtstm/storesservice/repositories"
+)
+
+// BicycleStoreService contains the logic to retrieve bicycle stores within a certain radius.
 type BicycleStoreService struct {
-	apikey string
+	repo repositories.BicycleStoreRepository
 }
 
-func NewBicycleStoreService(apiKey string) *BicycleStoreService {
+// NewBicycleStoreService creates a new service
+func NewBicycleStoreService(repo repositories.BicycleStoreRepository) *BicycleStoreService {
 	return &BicycleStoreService{
-		apikey: apiKey,
+		repo: repo,
 	}
+}
+
+func (s *BicycleStoreService) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error) {
+	return s.repo.GetBicycleStoresWithinRange(lat, lon, radius)
 }

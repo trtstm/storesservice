@@ -1,0 +1,71 @@
+package repositories
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+
+	"github.com/trtstm/storesservice/models"
+)
+
+type BicycleStoreRepository interface {
+	GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error)
+}
+
+// BicycleStoreRepositoryPlaces implements BicycleStoreRepository for the google places api.
+type BicycleStoreRepositoryPlaces struct {
+	apiKey string
+}
+
+func generatePlacesUrl(apiKey string, query string, lat, lon float64, radius uint) string {
+	u := "https://maps.googleapis.com/maps/api/place/textsearch/json"
+	params := url.Values{}
+	params.Add("key", apiKey)
+	params.Add("query", query)
+	params.Add("location", fmt.Sprintf("%f,%f", lat, lon))
+	params.Add("radius", fmt.Sprintf("%d", radius))
+	u += params.Encode()
+	return u
+}
+
+// NewBicycleStoreRepositoryPlaces creates a new repository with google places as a backend.
+// apiKey should be a valid google places api key.
+func NewBicycleStoreRepositoryPlaces(apiKey string) *BicycleStoreRepositoryPlaces {
+	return &BicycleStoreRepositoryPlaces{
+		apiKey: apiKey,
+	}
+}
+
+func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error) {
+	placesURL := generatePlacesUrl(r.apiKey, "bicycle store", lat, lon, radius)
+	resp, err := http.Get(placesURL)
+	if err != nil {
+		return []models.BicycleStore{}, fmt.Errorf("could not get get results from places api: %v", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []models.BicycleStore{}, fmt.Errorf("could not get read results from places api: %v", err)
+	}
+
+	results := struct {
+		Results []struct {
+			Name             string `json:"name"`
+			FormattedAddress string `json:formatted_address`
+		}
+	}{}
+
+	err = json.Unmarshal(body, &results)
+	if err != nil {
+		return []models.BicycleStore{}, fmt.Errorf("could not parse json from places api: %v", err)
+	}
+
+	bicycleStores := make([]models.BicycleStore, len(results.Results)) // Pre allocate right size.
+	for _, result := range results.Results {
+		bicycleStores = append(bicycleStores, models.BicycleStore{Name: result.Name})
+	}
+
+	return bicycleStores, nil
+}
