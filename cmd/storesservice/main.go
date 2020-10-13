@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/labstack/echo-contrib/prometheus"
+	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/trtstm/storesservice/cache"
 	"github.com/trtstm/storesservice/metrics"
@@ -56,7 +58,6 @@ func main() {
 	bss := services.NewBicycleStoreService(
 		repositories.NewBicycleStoreRepositoryPlaces(apiKey),
 		cache.NewMemoryCache(metrics),
-		metrics,
 	)
 
 	// Show metrics.
@@ -66,10 +67,6 @@ func main() {
 	}()
 
 	api := operations.NewStoresserviceAPI(swaggerSpec)
-	server := restapi.NewServer(api)
-	defer server.Shutdown()
-
-	server.Port = 8080
 
 	api.GetBicycleStoresHandler = operations.GetBicycleStoresHandlerFunc(
 		func(params operations.GetBicycleStoresParams) middleware.Responder {
@@ -87,7 +84,14 @@ func main() {
 			return operations.NewGetBicycleStoresOK().WithPayload(stores)
 		})
 
-	if err := server.Serve(); err != nil {
+	/*if err := server.Serve(); err != nil {
 		log.Fatalln(err)
-	}
+	}*/
+
+	e := echo.New()
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
+
+	e.GET("/bicyclestores", echo.WrapHandler(api.Serve(nil)))
+	e.Logger.Fatal(e.Start(":8080"))
 }

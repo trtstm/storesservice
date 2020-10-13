@@ -13,13 +13,9 @@ func newStr(str string) *string {
 }
 
 type MetricsMock struct {
-	requests  int
 	cacheHits int
 }
 
-func (m *MetricsMock) IncRequests() {
-	m.requests++
-}
 func (m *MetricsMock) IncCacheHits() {
 	m.cacheHits++
 }
@@ -60,7 +56,7 @@ func TestBicycleStoreServiceUseOfCacheAndMetrics(t *testing.T) {
 
 	repo.stores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 2"), Address: newStr("Address 2")}}
 
-	service := NewBicycleStoreService(repo, cache, metrics)
+	service := NewBicycleStoreService(repo, cache)
 
 	// Pretend cache has value.
 	cache.useStores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 1"), Address: newStr("Address 1")}}
@@ -105,7 +101,7 @@ func TestBicycleStoreServiceRepoFail(t *testing.T) {
 	repo.err = errors.New("crash...")
 	repo.stores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 2"), Address: newStr("Address 2")}}
 
-	service := NewBicycleStoreService(repo, cache, nil)
+	service := NewBicycleStoreService(repo, cache)
 	_, err := service.GetBicycleStoresWithinRange(10.0, 10.0, 5)
 	if err == nil {
 		t.Errorf("expected error from service since repo crashed")

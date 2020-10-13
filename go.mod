@@ -3,6 +3,7 @@ module github.com/trtstm/storesservice
 go 1.14
 
 require (
+	github.com/albertogviana/prometheus-middleware v0.0.2
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
 	github.com/go-openapi/errors v0.19.7
 	github.com/go-openapi/loads v0.19.5
@@ -15,12 +16,14 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kr/pretty v0.2.1 // indirect
+	github.com/labstack/echo-contrib v0.9.0 // indirect
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.7.1
+	github.com/slok/go-http-metrics v0.9.0
 	github.com/spf13/afero v1.4.1 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
 	go.mongodb.org/mongo-driver v1.4.2 // indirect

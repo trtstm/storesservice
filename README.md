@@ -12,7 +12,7 @@ docker build -t storesservice .
 ## Usage
 
 ```bash
-docker run --env API_KEY=<api_key> -p 8080:8080 -p 8081:8081 storesservice
+docker run --env API_KEY=<api_key> -p 8080:8080 storesservice
 ```
 
 or
@@ -24,7 +24,7 @@ The api can now be used at http://127.0.0.1:8080/bicyclestores.
 
 Api documentation is found at http://127.0.0.1:8080/docs
 
-Prometheus metrics is found at http://127.0.0.1:8081/metrics
+Prometheus metrics is found at http://127.0.0.1:8080/metrics
 
 
 ## License
