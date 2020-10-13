@@ -12,14 +12,6 @@ func newStr(str string) *string {
 	return &str
 }
 
-type MetricsMock struct {
-	cacheHits int
-}
-
-func (m *MetricsMock) IncCacheHits() {
-	m.cacheHits++
-}
-
 type CacheMock struct {
 	lastKey   string
 	useStores []*models.BicycleStore
@@ -52,7 +44,6 @@ func (r *RepoMock) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([
 func TestBicycleStoreServiceUseOfCacheAndMetrics(t *testing.T) {
 	cache := &CacheMock{}
 	repo := &RepoMock{}
-	metrics := &MetricsMock{}
 
 	repo.stores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 2"), Address: newStr("Address 2")}}
 
@@ -87,10 +78,6 @@ func TestBicycleStoreServiceUseOfCacheAndMetrics(t *testing.T) {
 	// Check if cache contains value
 	if cache.lastKey != fmt.Sprintf("%f,%f,%d", 2.0, 2.0, 3) {
 		t.Errorf("service did not update cache")
-	}
-
-	if metrics.requests != 2 {
-		t.Errorf("metrics is wrong, expected 2 requests")
 	}
 }
 
