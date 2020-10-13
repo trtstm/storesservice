@@ -3,15 +3,15 @@ package services
 import (
 	"testing"
 
-	"github.com/trtstm/storesservice/models"
+	"github.com/trtstm/storesservice/swagger/models"
 )
 
 // TestFilter tests if the filtering code is working.
 func TestFilter(t *testing.T) {
-	stores := []models.BicycleStore{
-		{Name: "Store aaaa ddd"},
-		{Name: "Store bbbb"},
-		{Name: "Store ddd"},
+	stores := []*models.BicycleStore{
+		&models.BicycleStore{Name: newStr("Store aaaa ddd")},
+		&models.BicycleStore{Name: newStr("Store bbbb")},
+		&models.BicycleStore{Name: newStr("Store ddd")},
 	}
 
 	results := Filter(stores, NameFilter("aaaa"))

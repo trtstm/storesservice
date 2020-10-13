@@ -4,28 +4,35 @@ import (
 	"log"
 	"sync"
 
-	"github.com/trtstm/storesservice/models"
+	"github.com/trtstm/storesservice/metrics"
+	"github.com/trtstm/storesservice/swagger/models"
 )
 
 type Cache interface {
-	Get(key string, getter func() ([]models.BicycleStore, error)) ([]models.BicycleStore, error)
+	Get(key string, getter func() ([]*models.BicycleStore, error)) ([]*models.BicycleStore, error)
 }
 
 type MemoryCache struct {
-	lock sync.RWMutex
-	db   map[string][]models.BicycleStore
+	lock    sync.RWMutex
+	db      map[string][]*models.BicycleStore
+	metrics metrics.Metrics
 }
 
-func NewMemoryCache() *MemoryCache {
+func NewMemoryCache(metrics metrics.Metrics) *MemoryCache {
 	return &MemoryCache{
-		db: map[string][]models.BicycleStore{},
+		db:      map[string][]*models.BicycleStore{},
+		metrics: metrics,
 	}
 }
 
-func (c *MemoryCache) Get(key string, getter func() ([]models.BicycleStore, error)) ([]models.BicycleStore, error) {
+// Get gets the key from cache or calls the getter function if not found.
+func (c *MemoryCache) Get(key string, getter func() ([]*models.BicycleStore, error)) ([]*models.BicycleStore, error) {
 	c.lock.RLock()
 	if stores, ok := c.db[key]; ok {
 		log.Printf("found %s in cache\n", key)
+		if c.metrics != nil {
+			c.metrics.IncCacheHits()
+		}
 		c.lock.RUnlock()
 		return stores, nil
 	}

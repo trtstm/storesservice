@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/trtstm/storesservice/models"
+	"github.com/trtstm/storesservice/swagger/models"
 )
 
 // BicycleStoreRepository returns a list of bicycle stores at a certain location.
 type BicycleStoreRepository interface {
-	GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error)
+	GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error)
 }
 
 // BicycleStoreRepositoryPlaces implements BicycleStoreRepository for the google places api.
@@ -42,44 +42,44 @@ func NewBicycleStoreRepositoryPlaces(apiKey string) *BicycleStoreRepositoryPlace
 }
 
 // GetBicycleStoresWithinRange gets the bicycle stores from the places api.
-func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error) {
+func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
 	log.Printf("trying to fetch bicycle stores from places api...\n")
 	placesURL := generatePlacesUrl(r.apiKey, "bicycle store", lat, lon, radius)
 	resp, err := http.Get(placesURL)
 	if err != nil {
-		return []models.BicycleStore{}, fmt.Errorf("could not get get results from places api: %v", err)
+		return []*models.BicycleStore{}, fmt.Errorf("could not get get results from places api: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return []models.BicycleStore{}, fmt.Errorf("places returned non zero status code: %v", resp.StatusCode)
+		return []*models.BicycleStore{}, fmt.Errorf("places returned non zero status code: %v", resp.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return []models.BicycleStore{}, fmt.Errorf("could not get read results from places api: %v", err)
+		return []*models.BicycleStore{}, fmt.Errorf("could not get read results from places api: %v", err)
 	}
 
 	results := struct {
 		Results []struct {
-			Name             string `json:"name"`
-			FormattedAddress string `json:"formatted_address"`
+			Name             *string `json:"name"`
+			FormattedAddress *string `json:"formatted_address"`
 		}
 		Status string `json:"status"`
 	}{}
 
 	err = json.Unmarshal(body, &results)
 	if err != nil {
-		return []models.BicycleStore{}, fmt.Errorf("could not parse json from places api: %v", err)
+		return []*models.BicycleStore{}, fmt.Errorf("could not parse json from places api: %v", err)
 	}
 
 	if results.Status != "OK" {
-		return []models.BicycleStore{}, fmt.Errorf("places returned non OK status: %v", results.Status)
+		return []*models.BicycleStore{}, fmt.Errorf("places returned non OK status: %v", results.Status)
 	}
 
-	bicycleStores := make([]models.BicycleStore, 0, len(results.Results)) // Pre allocate right size.
+	bicycleStores := make([]*models.BicycleStore, 0, len(results.Results)) // Pre allocate right size.
 	for _, result := range results.Results {
-		bicycleStores = append(bicycleStores, models.BicycleStore{Name: result.Name, Address: result.FormattedAddress})
+		bicycleStores = append(bicycleStores, &models.BicycleStore{Name: result.Name, Address: result.FormattedAddress})
 	}
 
 	return bicycleStores, nil

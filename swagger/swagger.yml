@@ -1,0 +1,38 @@
+swagger: "2.0"
+info:
+  title: 'Bicycle store api'
+  version: '0.0.1'
+paths:
+  /bicyclestores:
+    get:
+      operationId: 'getBicycleStores'
+      parameters:
+        - in: query
+          name: search
+          type: string
+          required: false
+      produces:
+      - 'application/json'
+      responses:
+        200:
+          description: 'A list of bicycle stores near sergels torg.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BicycleStore'
+        500:
+          description: 'Could not process request.'
+          schema:
+            type: string
+
+definitions:
+  BicycleStore:
+    type: object
+    properties:
+      name:
+        type: string
+      address:
+        type: string
+    required:
+      - name
+      - address
