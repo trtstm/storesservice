@@ -92,6 +92,8 @@ func main() {
 	p := prometheus.NewPrometheus("echo", nil)
 	p.Use(e)
 
-	e.GET("/bicyclestores", echo.WrapHandler(api.Serve(nil)))
+	e.GET("/bicyclestores", echo.WrapHandler(api.Serve(nil))) // Expose our endpoint.
+	e.GET("/docs", echo.WrapHandler(api.Serve(nil)))          // Expose docs
+	e.GET("/swagger.json", echo.WrapHandler(api.Serve(nil)))  // And allow docs to fetch json.
 	e.Logger.Fatal(e.Start(":8080"))
 }
