@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/trtstm/storesservice/models"
 )
 
+// BicycleStoreRepository returns a list of bicycle stores at a certain location.
 type BicycleStoreRepository interface {
 	GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error)
 }
@@ -19,8 +21,9 @@ type BicycleStoreRepositoryPlaces struct {
 	apiKey string
 }
 
+// generatePlacesUrl generates the google places url from which we can fetch the results.
 func generatePlacesUrl(apiKey string, query string, lat, lon float64, radius uint) string {
-	u := "https://maps.googleapis.com/maps/api/place/textsearch/json"
+	u := "https://maps.googleapis.com/maps/api/place/textsearch/json?"
 	params := url.Values{}
 	params.Add("key", apiKey)
 	params.Add("query", query)
@@ -38,13 +41,20 @@ func NewBicycleStoreRepositoryPlaces(apiKey string) *BicycleStoreRepositoryPlace
 	}
 }
 
+// GetBicycleStoresWithinRange gets the bicycle stores from the places api.
 func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]models.BicycleStore, error) {
+	log.Printf("trying to fetch bicycle stores from places api...\n")
 	placesURL := generatePlacesUrl(r.apiKey, "bicycle store", lat, lon, radius)
 	resp, err := http.Get(placesURL)
 	if err != nil {
 		return []models.BicycleStore{}, fmt.Errorf("could not get get results from places api: %v", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return []models.BicycleStore{}, fmt.Errorf("places returned non zero status code: %v", resp.StatusCode)
+	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return []models.BicycleStore{}, fmt.Errorf("could not get read results from places api: %v", err)
@@ -53,8 +63,9 @@ func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon floa
 	results := struct {
 		Results []struct {
 			Name             string `json:"name"`
-			FormattedAddress string `json:formatted_address`
+			FormattedAddress string `json:"formatted_address"`
 		}
+		Status string `json:"status"`
 	}{}
 
 	err = json.Unmarshal(body, &results)
@@ -62,9 +73,13 @@ func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon floa
 		return []models.BicycleStore{}, fmt.Errorf("could not parse json from places api: %v", err)
 	}
 
-	bicycleStores := make([]models.BicycleStore, len(results.Results)) // Pre allocate right size.
+	if results.Status != "OK" {
+		return []models.BicycleStore{}, fmt.Errorf("places returned non OK status: %v", results.Status)
+	}
+
+	bicycleStores := make([]models.BicycleStore, 0, len(results.Results)) // Pre allocate right size.
 	for _, result := range results.Results {
-		bicycleStores = append(bicycleStores, models.BicycleStore{Name: result.Name})
+		bicycleStores = append(bicycleStores, models.BicycleStore{Name: result.Name, Address: result.FormattedAddress})
 	}
 
 	return bicycleStores, nil
