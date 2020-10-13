@@ -4,7 +4,6 @@ Bicycle store api returns a list of bicycle stores around a certain area.
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
 
 ```bash
 docker build -t storesservice .
