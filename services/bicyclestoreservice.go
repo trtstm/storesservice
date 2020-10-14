@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/trtstm/storesservice/cache"
@@ -24,9 +25,9 @@ func NewBicycleStoreService(repo repositories.BicycleStoreRepository, cache cach
 }
 
 // GetBicycleStoresWithinRange uses the repository and caching to retrieve a list of bicycle stores.
-func (s *BicycleStoreService) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
+func (s *BicycleStoreService) GetBicycleStoresWithinRange(ctx context.Context, lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
 	// We cache on the lat,lon,radius pairs.
 	return s.cache.Get(fmt.Sprintf("%f,%f,%d", lat, lon, radius), func() ([]*models.BicycleStore, error) {
-		return s.repo.GetBicycleStoresWithinRange(lat, lon, radius)
+		return s.repo.GetBicycleStoresWithinRange(ctx, lat, lon, radius)
 	})
 }

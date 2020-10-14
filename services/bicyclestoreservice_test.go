@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -33,7 +34,7 @@ type RepoMock struct {
 	err    error
 }
 
-func (r *RepoMock) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
+func (r *RepoMock) GetBicycleStoresWithinRange(ctx context.Context, lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
 	if r.err != nil {
 		return r.stores, r.err
 	}
@@ -51,7 +52,7 @@ func TestBicycleStoreServiceUseOfCacheAndMetrics(t *testing.T) {
 
 	// Pretend cache has value.
 	cache.useStores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 1"), Address: newStr("Address 1")}}
-	s, err := service.GetBicycleStoresWithinRange(1.0, 1.0, 1)
+	s, err := service.GetBicycleStoresWithinRange(context.Background(), 1.0, 1.0, 1)
 	if err != nil {
 		t.Fail()
 	}
@@ -66,7 +67,7 @@ func TestBicycleStoreServiceUseOfCacheAndMetrics(t *testing.T) {
 
 	// Pretend cache doesn't have value.
 	cache.useStores = nil
-	s, err = service.GetBicycleStoresWithinRange(2.0, 2.0, 3)
+	s, err = service.GetBicycleStoresWithinRange(context.Background(), 2.0, 2.0, 3)
 	if err != nil {
 		t.Fail()
 	}
@@ -89,7 +90,7 @@ func TestBicycleStoreServiceRepoFail(t *testing.T) {
 	repo.stores = []*models.BicycleStore{&models.BicycleStore{Name: newStr("Name 2"), Address: newStr("Address 2")}}
 
 	service := NewBicycleStoreService(repo, cache)
-	_, err := service.GetBicycleStoresWithinRange(10.0, 10.0, 5)
+	_, err := service.GetBicycleStoresWithinRange(context.Background(), 10.0, 10.0, 5)
 	if err == nil {
 		t.Errorf("expected error from service since repo crashed")
 	}

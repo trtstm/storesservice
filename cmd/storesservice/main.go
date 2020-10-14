@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -68,10 +69,13 @@ func main() {
 
 	api := operations.NewStoresserviceAPI(swaggerSpec)
 
+	backgroundCtx := context.Background()
+
 	api.GetBicycleStoresHandler = operations.GetBicycleStoresHandlerFunc(
 		func(params operations.GetBicycleStoresParams) middleware.Responder {
-			stores, err := bss.GetBicycleStoresWithinRange(lat, lon, radius)
+			stores, err := bss.GetBicycleStoresWithinRange(backgroundCtx, lat, lon, radius)
 			if err != nil {
+				log.Println(err)
 				return operations.NewGetBicycleStoresInternalServerError().WithPayload(INTERNAL_SERVER_ERROR_MESSAGE)
 			}
 

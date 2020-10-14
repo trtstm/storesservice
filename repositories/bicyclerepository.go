@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +14,7 @@ import (
 
 // BicycleStoreRepository returns a list of bicycle stores at a certain location.
 type BicycleStoreRepository interface {
-	GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error)
+	GetBicycleStoresWithinRange(ctx context.Context, lat, lon float64, radius uint) ([]*models.BicycleStore, error)
 }
 
 // BicycleStoreRepositoryPlaces implements BicycleStoreRepository for the google places api.
@@ -42,10 +43,15 @@ func NewBicycleStoreRepositoryPlaces(apiKey string) *BicycleStoreRepositoryPlace
 }
 
 // GetBicycleStoresWithinRange gets the bicycle stores from the places api.
-func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
+func (r *BicycleStoreRepositoryPlaces) GetBicycleStoresWithinRange(ctx context.Context, lat, lon float64, radius uint) ([]*models.BicycleStore, error) {
 	log.Printf("trying to fetch bicycle stores from places api...\n")
 	placesURL := generatePlacesUrl(r.apiKey, "bicycle store", lat, lon, radius)
-	resp, err := http.Get(placesURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", placesURL, nil)
+	if err != nil {
+		return []*models.BicycleStore{}, fmt.Errorf("could not create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return []*models.BicycleStore{}, fmt.Errorf("could not get get results from places api: %v", err)
 	}
